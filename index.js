@@ -248,7 +248,6 @@ function WeekDayCalcException (message) {
     this.name = 'WeekDayCalcException';
 }
 WeekDayCalcException.prototype = new Error;
-WeekDayCalc.prototype.WeekDayCalcException = WeekDayCalcException;
 
 function DaysSetConverter (rangeStart, weekdays, exclusions, inclusions, useIsoWeekday) {
     this.rangeStart = moment(rangeStart);
