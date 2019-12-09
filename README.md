@@ -1,9 +1,25 @@
-# moment-business-days
+# itp-moment-business-days
 
-<a href="https://github.com/kalmecak/moment-business-days/actions" target="_blank">
-  <img alt="Version" src="https://github.com/kalmecak/moment-business-days/workflows/Continuous%20Integration/badge.svg?branch=master">
+<a href="https://github.com/179045/moment-business-days/actions" target="_blank">
+  <img alt="Version" src="https://github.com/179045/moment-business-days/workflows/Continuous%20Integration/badge.svg?branch=master">
 </a>
 
+This is a plugin combining moment-business-day(https://github.com/kalmecak/moment-business-days) and
+moment-weekday-calc (https://github.com/andruhon/moment-weekday-calc)
+The plugin is taken as a basis moment-business-day(https://github.com/kalmecak/moment-business-days) 
+and method added isoAddWeekdaysFromSet
+which considers the date with the calculation of holidays and exceptions
+````javascript
+var momentBusinessDays = require("itp-moment-business-days")
+momentBusinessDays(dateStart moment|Date|String).isoAddWeekdaysFromSet(workdaysToAdd int, weekdays Array)  
+momentBusinessDays(dateStart moment|Date|String).isoAddWeekdaysFromSet(workdaysToAdd int, weekdays Array, exclusions Array, inclusions Array)  
+momentBusinessDays(dateStart moment|Date|String).isoAddWeekdaysFromSet({  
+  'workdays': int, //required, it is also possible to use 'days' alias  
+  'weekdays': weekdays Array, //optional  
+  'exclusions': exclusions Array, //optional  
+  'inclusions': inclusions Array //optional  
+})  
+````
 This is a [Moment.js](https://github.com/moment/moment/) plugin that allows you to work with only business days
 (Monday to Friday). You can customize the working week, and also set custom dates for holidays to exclude them from
 being counted as business days, for example **national holidays**.
