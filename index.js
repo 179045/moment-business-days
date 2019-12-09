@@ -243,6 +243,13 @@ moment.fn.monthNaturalWeeks = function (fromToday) {
   return weeksArr;
 };
 
+Function.prototype.construct = function(aArgs) {
+    /*Monkey patching Function prototype to have construct method*/
+    var fConstructor = this, fNewConstr = function() { fConstructor.apply(this, aArgs); };
+    fNewConstr.prototype = fConstructor.prototype;
+    return new fNewConstr();
+};
+
 function WeekDayCalcException (message) {
     this.message = message;
     this.name = 'WeekDayCalcException';
@@ -291,6 +298,17 @@ function DaysSetConverterException (message) {
 }
 DaysSetConverterException.prototype = new Error;
 DaysSetConverter.prototype.DaysSetConverterException = DaysSetConverterException;
+
+var parseSet = function(set) {
+    var str_exclusions = [];
+    if (set) {
+        var i=0, l = set.length;
+        for (;i<l;i++) {
+            str_exclusions.push(moment(set[i]).format("YYYY-MM-DD"));
+        }
+    }
+    return str_exclusions;
+};
 
 var parseWeekdays = function(weekdays, useIsoWeekday) {
     var validWeekdays = [];
