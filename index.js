@@ -243,6 +243,120 @@ moment.fn.monthNaturalWeeks = function (fromToday) {
   return weeksArr;
 };
 
+function WeekDayCalcException (message) {
+    this.message = message;
+    this.name = 'WeekDayCalcException';
+}
+WeekDayCalcException.prototype = new Error;
+WeekDayCalc.prototype.WeekDayCalcException = WeekDayCalcException;
+
+function DaysSetConverter (rangeStart, weekdays, exclusions, inclusions, useIsoWeekday) {
+    this.rangeStart = moment(rangeStart);
+    this.useIsoWeekday = (useIsoWeekday==true);
+    this.exclusions = exclusions;
+    this.inclusions = inclusions;
+    this.weekdays = parseWeekdays(weekdays, this.useIsoWeekday);
+}
+
+DaysSetConverter.prototype.calculate = function(daysToAdd) {
+    var daysLeft = daysToAdd;
+    var resultDate = this.rangeStart.clone();
+    var str_exclusions = parseSet(this.exclusions);
+    var str_inclusions = parseSet(this.inclusions);
+    var weekdayFunc = this.useIsoWeekday?'isoWeekday':'weekday';
+    if (daysLeft>=0){
+        /* positive value - add days */
+        while (daysLeft > 0) {
+            resultDate.add(1, 'day');
+            var included = str_inclusions.length != 0 && str_inclusions.indexOf(resultDate.format("YYYY-MM-DD"))>=0;
+            if (included || ((this.weekdays.indexOf(resultDate[weekdayFunc]()) >= 0) && (str_exclusions.length == 0 || str_exclusions.indexOf(resultDate.format("YYYY-MM-DD")) < 0))) {
+                daysLeft--;
+            }
+        }
+    } else {
+        /* negative value - subtract days */
+        while (daysLeft < 0) {
+            resultDate.subtract(1, 'day');
+            var included = str_inclusions.length != 0 && str_inclusions.indexOf(resultDate.format("YYYY-MM-DD"))>=0;
+            if (included || ((this.weekdays.indexOf(resultDate[weekdayFunc]()) >= 0) && (str_exclusions.length == 0 || str_exclusions.indexOf(resultDate.format("YYYY-MM-DD")) < 0))) {
+                daysLeft++;
+            }
+        }
+    }
+    return resultDate;
+};
+
+function DaysSetConverterException (message) {
+    this.message = message;
+    this.name = 'DaysSetConverterException';
+}
+DaysSetConverterException.prototype = new Error;
+DaysSetConverter.prototype.DaysSetConverterException = DaysSetConverterException;
+
+var parseWeekdays = function(weekdays, useIsoWeekday) {
+    var validWeekdays = [];
+    if (!weekdays) {
+        throw new WeekDayCalcException('weekdays must be defined');
+    }
+    if (weekdays.length > 7) {
+        throw new WeekDayCalcException("Weekdays array exceeding week length of 7 days");
+    }
+    for (var i=0;i<weekdays.length;i++) {
+        var weekday = weekdays[i];
+        if (useIsoWeekday) {
+            if (isNaN(weekday)) throw new WeekDayCalcException("isoWeekDayCalc accepts weekdays as numbers only, try using weekdayCalc if you need a locale aware behaviour");
+            if (weekday<1 || weekday>7) throw new WeekDayCalcException("The weekday is out of 1 to 7 range");
+        } else if(!isNaN(weekday)){
+            if (weekday<0 || weekday>6) throw new WeekDayCalcException("The weekday is out of 0 to 6 range");
+        } else {
+            weekday = moment().day(weekday).weekday();
+        }
+        if (validWeekdays.indexOf(weekday)>=0) {
+            throw new WeekDayCalcException("Weekdays set contains duplicate weekday");
+        }
+        validWeekdays.push(weekday);
+    }
+    return validWeekdays;
+};
+
+DaysSetConverter.calculateDate = function(that, inArgs, useIsoWeekday) {
+    var days, exclusions, inclusions, weekdaysSet;
+    useIsoWeekday = useIsoWeekday?true:false;
+    var rangeStart = that;
+    switch (inArgs.length) {
+        case 4:
+            exclusions = inArgs[2];
+            inclusions = inArgs[3];
+        case 3:
+            exclusions = inArgs[2];
+        /* Fall-through to two args*/
+        case 2:
+            days = inArgs[0];
+            weekdaysSet = inArgs[1];
+            break;
+        case 1:
+            var arg = inArgs[0];
+            if (arg && (arg.days!=undefined || arg.workdays!=undefined) ) {
+                if (arg.days!=undefined && arg.workdays!=undefined) throw new DaysSetConverterException("days and weekdays args should not be used together, because weekdays is an alias of days");
+                days = arg.days?arg.days:arg.workdays;
+                weekdaysSet = arg.weekdays?arg.weekdays:[1,2,3,4,5];
+                exclusions = arg.exclusions;
+                inclusions = arg.inclusions;
+            } else {
+                days = arg;
+            }
+            break;
+        default:
+            new DaysSetConverterException('unexpected arguments length '+inArgs.length+'. Expecting 1 to 3 args');
+    }
+    var calc =  DaysSetConverter.construct([that, weekdaysSet, exclusions, inclusions, useIsoWeekday]);
+    return calc.calculate(days);
+};
+
+moment.fn.isoAddWeekdaysFromSet = function() {
+    return DaysSetConverter.calculateDate(this, arguments, true);
+};
+
 if (typeof module != 'undefined' && module.exports) {
   module.exports = moment;
 }
